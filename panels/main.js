@@ -93,6 +93,7 @@ function renderHeader() {
   if (!names.includes(source)) source = names[0] || ''
   sel.replaceChildren(...names.map((n) => el('option', { value: n, selected: n === source }, `${n} (${state.sources[n].length})`)))
   sel.hidden = names.length === 0
+  document.getElementById('forget').hidden = names.length === 0
   const ev = document.getElementById('eval')
   if (state && state.lastEval) {
     ev.textContent = `eval ${state.lastEval.passed}/${state.lastEval.total} · ${ago(state.lastEval.at)}`
@@ -125,6 +126,27 @@ document.getElementById('source').addEventListener('change', (e) => {
   source = e.target.value
   openForm = null
   render()
+})
+// Forget asks twice: window.confirm() is blocked in the sandboxed panel frame, so the first click
+// arms the button for 4 s and a second click forgets.
+let forgetArmed = null
+document.getElementById('forget').addEventListener('click', (e) => {
+  const btn = e.currentTarget
+  if (!source) return
+  if (forgetArmed === source) {
+    clearTimeout(btn.timer)
+    forgetArmed = null
+    btn.textContent = 'Forget'
+    ccPanel.post({ type: 'forget', source })
+    return
+  }
+  forgetArmed = source
+  btn.textContent = `Forget ${source}? Click again`
+  clearTimeout(btn.timer)
+  btn.timer = setTimeout(() => {
+    forgetArmed = null
+    btn.textContent = 'Forget'
+  }, 4000)
 })
 document.getElementById('run-eval').addEventListener('click', () => {
   document.getElementById('eval').textContent = 'evaluating…'

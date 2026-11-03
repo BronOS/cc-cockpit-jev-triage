@@ -138,3 +138,32 @@ test('a jev refusal shows on the panel until a call succeeds', async () => {
   assert.equal(ctx.lastState().jevError, null)
   assert.equal(ctx.badges.at(-1), null)
 })
+
+test('forget drops a source: listed verdicts, corrections, cases and cache; other sources stay', async () => {
+  const jev = fakeJev()
+  const ctx = await start({ jev })
+  const triage = ctx.provided.triage
+  await triage.classify('test', [{ id: 't1', text: 'Weekly report [read] [notification]' }, { id: 't2', text: 'Fix login [action] [request]' }])
+  await triage.classify('mail', [{ id: 'm1', text: 'Can you review? [action] [request]' }])
+  await ctx.sendPanel({ type: 'wrong', source: 'test', id: 't1', priority: 'noise' })
+  await ctx.sendPanel({ type: 'wrong', source: 'mail', id: 'm1', priority: 'urgent' })
+  assert.equal(ctx.lastState().cases, 2)
+
+  const r = await ctx.runCli(['forget', 'test'])
+  assert.equal(r.code, undefined)
+  assert.match(r.stdout, /forgot test: 2 listed verdicts, 1 corrections, 1 cases, 2 cached Jev verdicts/)
+  assert.deepEqual(Object.keys(ctx.lastState().sources), ['mail'])
+  assert.equal(ctx.lastState().cases, 1)
+  // The cache went too: the same text is asked of Jev again.
+  const again = await triage.classify('test', [{ id: 't1', text: 'Weekly report [read] [notification]' }])
+  assert.equal(again.results.t1.by, 'jev')
+  assert.equal(again.stats.asked, 1)
+
+  // The panel's Forget does the same; a bad source name is an error, not a forget of nothing.
+  await ctx.sendPanel({ type: 'forget', source: 'test' })
+  assert.deepEqual(Object.keys(ctx.lastState().sources), ['mail'])
+  await ctx.sendPanel({ type: 'forget', source: 'Bad/Name' })
+  assert.deepEqual(Object.keys(ctx.lastState().sources), ['mail'])
+  assert.equal((await ctx.runCli(['forget'])).code, 2)
+  assert.equal((await ctx.runCli(['forget', 'Bad/Name'])).code, 2)
+})

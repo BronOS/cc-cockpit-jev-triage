@@ -106,6 +106,13 @@ class OverrideStore {
     return m ? m.delete(id) : false
   }
 
+  /** Drop every override of a source (ccc triage forget); returns how many there were. */
+  forget(source) {
+    const m = this.bySource.get(source)
+    this.bySource.delete(source)
+    return m ? m.size : 0
+  }
+
   /** The sources that hold overrides, for persisting one storage key per source. */
   sources() {
     return [...this.bySource.keys()]
@@ -158,6 +165,13 @@ class RecentStore {
     const r = this.find(source, id)
     if (r) Object.assign(r, fields)
     return r
+  }
+
+  /** Drop a source's listed verdicts (ccc triage forget); returns how many rows there were. */
+  forget(source) {
+    const list = this.bySource.get(source)
+    this.bySource.delete(source)
+    return list ? list.length : 0
   }
 
   sources() {

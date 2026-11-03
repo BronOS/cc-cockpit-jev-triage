@@ -98,4 +98,9 @@ async function evalCases(deps, cases) {
   return { passed: rows.filter((r) => r.ok).length, total: rows.length, rows }
 }
 
-module.exports = { CASE_CAP, parseJsonl, toJsonl, makeCase, addCase, removeCase, passes, evalCases }
+/** The cases of every source but `source` (ccc triage forget). */
+function forgetSource(cases, source) {
+  return cases.filter((x) => x.source !== source)
+}
+
+module.exports = { forgetSource, CASE_CAP, parseJsonl, toJsonl, makeCase, addCase, removeCase, passes, evalCases }

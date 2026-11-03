@@ -18,6 +18,8 @@ const HELP = `triage: priority and kind for items of source plugins, judged by J
   ccc triage wrong <source> <id> <priority>[/<kind>] [note...]
                                   what the panel's Wrong? does: store your correction as an override and
                                   record the item (from the recent verdicts) as a case
+  ccc triage forget <source>      drop a source from the panel: its listed verdicts, your corrections,
+                                  its cases and its cached Jev verdicts (a test source, a removed plugin)
   ccc triage cases [--json]       the recorded cases (Wrong? adds one)
   ccc triage cases delete <source> <id>
                                   remove one case
@@ -164,6 +166,13 @@ async function run(argv, call, deps) {
         if (rest[0] && !V.SOURCE_RE.test(rest[0])) return usage(`source must match ${V.SOURCE_RE}`)
         const r = await deps.rescore(rest[0] || null)
         return { stdout: `forgot ${r.cleared} cached verdicts${rest[0] ? ` of ${rest[0]}` : ''}; told ${r.sources.length ? r.sources.join(', ') : 'no source'} to classify again\n` }
+      }
+
+      case 'forget': {
+        if (rest.length !== 1) return usage('forget <source>')
+        if (!V.SOURCE_RE.test(rest[0])) return usage(`source must match ${V.SOURCE_RE}`)
+        const r = await deps.forget(rest[0])
+        return { stdout: `forgot ${rest[0]}: ${r.verdicts} listed verdicts, ${r.overrides} corrections, ${r.cases} cases, ${r.cached} cached Jev verdicts\n` }
       }
 
       case 'wrong': {

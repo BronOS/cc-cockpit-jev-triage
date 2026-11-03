@@ -118,6 +118,9 @@ ccc triage questions   # the questions as Jev gets them
 - `ccc triage rescore [source]`: forget cached Jev verdicts and tell the sources to classify again.
 - `ccc triage wrong <source> <id> <priority>[/<kind>] [note...]`: what the panel's Wrong? does.
 - `ccc triage cases [--json]`, `ccc triage cases delete <source> <id>`: the recorded cases.
+- `ccc triage forget <source>`: drop a source from the panel with its listed verdicts, your corrections,
+  its cases and its cached Jev verdicts (a test source, or a source plugin you removed). The panel's
+  Forget button does the same (click twice).
 - `ccc triage questions`, `ccc triage help`.
 
 ```

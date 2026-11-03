@@ -180,6 +180,27 @@ exports.activate = (ctx) => {
     return { cleared, sources }
   }
 
+  // ccc triage forget / the panel's Forget: a source's listed verdicts, overrides, cases and cached
+  // Jev verdicts all go (a test source, or a source plugin the person removed). Its plugin, if it is
+  // still installed, simply lists again on its next classify; nothing is emitted.
+  async function forget(source) {
+    await ready
+    const out = {
+      verdicts: S.recent.forget(source),
+      overrides: S.overrides.forget(source),
+      cases: S.cases.length,
+      cached: S.cache.clear(source),
+    }
+    S.cases = C.forgetSource(S.cases, source)
+    out.cases -= S.cases.length
+    saveRecent()
+    saveOverrides(source)
+    saveCases()
+    saveCache()
+    postState()
+    return out
+  }
+
   // The final verdict of a listed row after its override changed: the override (or the base again),
   // then the floor, exactly as classify would do.
   function refreshRow(source, id) {
@@ -305,6 +326,10 @@ exports.activate = (ctx) => {
       if (m.type === 'hello' || m.type === 'refresh') return postState()
       if (m.type === 'wrong') return void (await wrong(m.source, m.id, { priority: m.priority, kind: m.kind || undefined }, m.note))
       if (m.type === 'clear') return void (await clearOverride(m.source, m.id))
+      if (m.type === 'forget') {
+        V.checkSource(m.source) // throws on a bad name; returns nothing
+        return void (await forget(m.source))
+      }
       if (m.type === 'improve') {
         const c = S.cases.find((x) => x.source === m.source && x.id === m.id)
         const row = S.recent.find(m.source, m.id)
@@ -332,6 +357,7 @@ exports.activate = (ctx) => {
       classify: runClassify,
       evaluate: runEval,
       rescore,
+      forget,
       wrong,
       cases: async () => S.cases,
       deleteCase: async (source, id) => {
