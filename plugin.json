@@ -1,0 +1,212 @@
+{
+  "id": "bronos.jev-triage",
+  "name": "Jev triage",
+  "version": "0.1.0",
+  "api": 1,
+  "main": "dist/host.js",
+  "description": "Priority and kind for the items of source plugins (mail, Jira, chat), judged by Jev with project rules and your corrections: the \"triage\" plugin service.",
+  "author": "Oleg Bronzov",
+  "license": "MIT",
+  "contributes": {
+    "panels": [
+      {
+        "id": "main",
+        "title": "Jev triage",
+        "icon": "icons/triage.svg",
+        "entry": "panels/main.html",
+        "defaultZone": "right"
+      }
+    ],
+    "settings": {
+      "project": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string",
+            "title": "Profile",
+            "description": "Who you are, what you own, and what is not yours right now. Appended to Jev's priority question; most fixes land here. Changing it rescores everything on the next classify.",
+            "maxLength": 8000,
+            "default": ""
+          },
+          "rules": {
+            "type": "array",
+            "title": "Rules",
+            "description": "Checked before Jev, first match wins, case-insensitive. Give exactly one of \"equals\" and \"contains\". Field: one of the item's fields (from, lane, project, ...) or \"text\".",
+            "maxItems": 200,
+            "default": [],
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "field",
+                "priority"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "title": "Source (empty: any)",
+                  "maxLength": 32
+                },
+                "field": {
+                  "type": "string",
+                  "title": "Field",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "equals": {
+                  "type": "string",
+                  "title": "Equals",
+                  "maxLength": 500
+                },
+                "contains": {
+                  "type": "string",
+                  "title": "Contains",
+                  "maxLength": 500
+                },
+                "priority": {
+                  "type": "string",
+                  "title": "Priority",
+                  "enum": [
+                    "urgent",
+                    "action",
+                    "fyi",
+                    "noise"
+                  ],
+                  "default": "fyi"
+                },
+                "kind": {
+                  "type": "string",
+                  "title": "Kind (empty: keep the hint's, or none)",
+                  "enum": [
+                    "",
+                    "request",
+                    "incident",
+                    "discussion",
+                    "alert",
+                    "notification",
+                    "ack"
+                  ],
+                  "default": ""
+                }
+              }
+            }
+          },
+          "priorityInstructions": {
+            "type": "string",
+            "title": "Priority question",
+            "description": "The wording of Jev's priority question; empty: the built-in one. The profile is appended to it.",
+            "maxLength": 4000,
+            "default": ""
+          },
+          "priorityCriteria": {
+            "type": "object",
+            "title": "Priority choices (read becomes fyi, low becomes noise)",
+            "description": "One line per choice; leave a line empty to keep the built-in wording (`ccc triage questions` prints the questions in use).",
+            "additionalProperties": false,
+            "properties": {
+              "urgent": {
+                "type": "string",
+                "title": "urgent",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "action": {
+                "type": "string",
+                "title": "action",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "read": {
+                "type": "string",
+                "title": "read",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "low": {
+                "type": "string",
+                "title": "low",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "noise": {
+                "type": "string",
+                "title": "noise",
+                "maxLength": 2000,
+                "default": ""
+              }
+            },
+            "default": {}
+          },
+          "kindInstructions": {
+            "type": "string",
+            "title": "Kind question",
+            "description": "The wording of Jev's kind question; empty: the built-in one.",
+            "maxLength": 4000,
+            "default": ""
+          },
+          "kindCriteria": {
+            "type": "object",
+            "title": "Kind choices",
+            "description": "One line per choice; leave a line empty to keep the built-in wording (`ccc triage questions` prints the questions in use).",
+            "additionalProperties": false,
+            "properties": {
+              "request": {
+                "type": "string",
+                "title": "request",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "incident": {
+                "type": "string",
+                "title": "incident",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "discussion": {
+                "type": "string",
+                "title": "discussion",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "alert": {
+                "type": "string",
+                "title": "alert",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "notification": {
+                "type": "string",
+                "title": "notification",
+                "maxLength": 2000,
+                "default": ""
+              },
+              "ack": {
+                "type": "string",
+                "title": "ack",
+                "maxLength": 2000,
+                "default": ""
+              }
+            },
+            "default": {}
+          }
+        }
+      }
+    },
+    "cli": [
+      {
+        "name": "triage",
+        "summary": "Jev triage: classify items from stdin, eval the cases, rescore, list cases",
+        "usage": "triage classify [source] [--json] < items.jsonl | eval [--json] | rescore [source] | wrong <source> <id> <priority>[/<kind>] [note] | cases [--json] | cases delete <source> <id> | questions | help",
+        "stdin": true
+      }
+    ]
+  },
+  "services": {
+    "uses": {
+      "jev": 1
+    },
+    "provides": {
+      "triage": 1
+    }
+  }
+}

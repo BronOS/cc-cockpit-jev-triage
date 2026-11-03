@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jev triage</title>
+    <!-- The panel CSP allows script from this plugin's own files only (no inline script), so the
+      logic lives in main.js. The SDK gives the page `ccPanel` and the app theme variables. -->
+    <script src="/__sdk/panel.js"></script>
+    <script src="main.js" defer></script>
+    <style>
+      body { margin: 0; padding: 10px; font: 12px/1.4 system-ui, sans-serif; background: var(--cc-bg); color: var(--cc-fg); }
+      button, select, input { font: inherit; color: inherit; background: var(--cc-bg-menu); border: 1px solid var(--cc-border); border-radius: 4px; padding: 2px 6px; }
+      button:hover { border-color: var(--cc-border-strong); }
+      button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--cc-focus); outline-offset: 1px; }
+      header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+      header .grow { flex: 1; }
+      .muted { color: var(--cc-fg-muted); }
+      .subtle { color: var(--cc-fg-subtle); }
+      .notice { background: var(--cc-bg-error); border: 1px solid var(--cc-border); border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; }
+      .notice.info { background: var(--cc-bg-banner); }
+      .empty { color: var(--cc-fg-muted); padding: 12px 0; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      li.row { border-bottom: 1px solid var(--cc-border); padding: 5px 0; }
+      .line { display: flex; gap: 6px; align-items: center; }
+      .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .meta { color: var(--cc-fg-muted); white-space: nowrap; }
+      .actions { display: flex; gap: 4px; margin-top: 3px; padding-left: 16px; }
+      .actions button { padding: 0 6px; font-size: 11px; }
+      /* The confidence dot: filled at 0.5 and above, hollow below (design "Vocabulary"). */
+      .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; border: 2px solid currentColor; background: currentColor; box-sizing: border-box; }
+      .dot.low { background: transparent; }
+      .p-urgent { color: var(--cc-status-ended); }
+      .p-action { color: var(--cc-status-needs-permission); }
+      .p-fyi { color: var(--cc-status-working); }
+      .p-noise { color: var(--cc-fg-subtle); }
+      .badge { font-size: 10px; padding: 0 4px; border-radius: 3px; background: var(--cc-surface-2); color: var(--cc-fg-muted); }
+      form.wrong { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0 2px 16px; padding: 6px; background: var(--cc-surface-1); border-radius: 4px; }
+      form.wrong input[type=text] { flex: 1; min-width: 120px; }
+      button.primary { background: var(--cc-accent); color: var(--cc-accent-fg); border-color: var(--cc-accent); }
+      button.primary:hover { background: var(--cc-accent-hover); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Jev triage</strong>
+      <select id="source" aria-label="Source"></select>
+      <span class="grow"></span>
+      <span id="eval" class="muted"></span>
+      <button id="run-eval" type="button" title="Re-judge every case with the current settings">Eval</button>
+    </header>
+    <div id="notices"></div>
+    <ul id="rows"></ul>
+    <p id="empty" class="empty" hidden>No verdicts yet. A source plugin's items appear here once it calls the triage service; try <code>ccc triage classify &lt; items.jsonl</code>.</p>
+  </body>
+</html>
