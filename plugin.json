@@ -1,7 +1,7 @@
 {
   "id": "bronos.jev-triage",
   "name": "Jev triage",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "api": 1,
   "main": "dist/host.js",
   "description": "Priority and kind for the items of source plugins (mail, Jira, chat), judged by Jev with project rules and your corrections: the \"triage\" plugin service.",
@@ -26,7 +26,8 @@
             "title": "Profile",
             "description": "Who you are, what you own, and what is not yours right now. Appended to Jev's priority question; most fixes land here. Changing it rescores everything on the next classify.",
             "maxLength": 8000,
-            "default": ""
+            "default": "",
+            "format": "multiline"
           },
           "rules": {
             "type": "array",
@@ -51,7 +52,8 @@
                   "type": "string",
                   "title": "Field",
                   "minLength": 1,
-                  "maxLength": 64
+                  "maxLength": 64,
+                  "default": "from"
                 },
                 "equals": {
                   "type": "string",
@@ -88,7 +90,8 @@
                   ],
                   "default": ""
                 }
-              }
+              },
+              "title": "Rule"
             }
           },
           "priorityInstructions": {
@@ -96,7 +99,8 @@
             "title": "Priority question",
             "description": "The wording of Jev's priority question; empty: the built-in one. The profile is appended to it.",
             "maxLength": 4000,
-            "default": ""
+            "default": "",
+            "format": "multiline"
           },
           "priorityCriteria": {
             "type": "object",
@@ -142,7 +146,8 @@
             "title": "Kind question",
             "description": "The wording of Jev's kind question; empty: the built-in one.",
             "maxLength": 4000,
-            "default": ""
+            "default": "",
+            "format": "multiline"
           },
           "kindCriteria": {
             "type": "object",
