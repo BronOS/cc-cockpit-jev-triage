@@ -29,28 +29,43 @@ test('help and unknown subcommands', async () => {
   assert.equal(r.code, 2)
 })
 
-test('classify reads JSONL and prints one line per item plus stats on stderr', async () => {
+// classify reads a file relative to the caller's folder (not stdin: see cli.js).
+const fsx = require('node:fs')
+const osx = require('node:os')
+const pathx = require('node:path')
+function itemsDir(files) {
+  const dir = fsx.mkdtempSync(pathx.join(osx.tmpdir(), 'triage-cli-'))
+  for (const [name, text] of Object.entries(files)) fsx.writeFileSync(pathx.join(dir, name), text)
+  return { stdin: '', cwd: dir, signal: new AbortController().signal }
+}
+
+test('classify reads a JSONL file and prints one line per item plus stats on stderr', async () => {
   let seen
   const d = deps({ classify: async (s, items) => { seen = s; return deps().classify(s, items) } })
-  const r = await cli.run(['classify', 'mail'], call('{"id":"a","text":"Hello there"}\n\n{"id":"b","text":"x"}\n'), d)
+  const c = itemsDir({ 'items.jsonl': '{"id":"a","text":"Hello there"}\n\n{"id":"b","text":"x"}\n', 'one.jsonl': '{"id":"a","text":"x"}' })
+  const r = await cli.run(['classify', 'items.jsonl', 'mail'], c, d)
   assert.equal(seen, 'mail')
   assert.match(r.stdout, /^a\s+fyi\s+discussion\s+jev\s+0\.75\s+Hello there/m)
   assert.match(r.stderr, /2 items, 2 jev, 2 asked Jev/)
-  const j = await cli.run(['classify', '--json'], call('{"id":"a","text":"x"}'), d)
+  const j = await cli.run(['classify', 'one.jsonl', '--json'], c, d)
   assert.equal(seen, 'cli')
   assert.deepEqual(JSON.parse(j.stdout), { id: 'a', priority: 'fyi', kind: 'discussion', confidence: 0.75, by: 'jev' })
 })
 
 test('classify input errors are usage errors', async () => {
-  assert.equal((await cli.run(['classify'], call(''), deps())).code, 2)
-  const bad = await cli.run(['classify'], call('{"id":"a"}\nnot json'), deps())
+  const c = itemsDir({ 'empty.jsonl': '', 'bad.jsonl': '{"id":"a"}\nnot json', 'ok.jsonl': '{}' })
+  assert.equal((await cli.run(['classify'], c, deps())).code, 2)
+  assert.equal((await cli.run(['classify', 'empty.jsonl'], c, deps())).code, 2)
+  assert.match((await cli.run(['classify', 'missing.jsonl'], c, deps())).stderr, /cannot read missing\.jsonl/)
+  assert.match((await cli.run(['classify', '.'], c, deps())).stderr, /is not a file/)
+  const bad = await cli.run(['classify', 'bad.jsonl'], c, deps())
   assert.equal(bad.code, 2)
   assert.match(bad.stderr, /line 2/)
-  assert.equal((await cli.run(['classify', 'Bad/Name'], call('{}'), deps())).code, 2)
+  assert.equal((await cli.run(['classify', 'ok.jsonl', 'Bad/Name'], c, deps())).code, 2)
 })
 
 test('jev missing: the install hint on stderr, exit 1', async () => {
-  const r = await cli.run(['classify'], call('{"id":"a","text":"x"}'), deps({ classify: async () => { throw new Error(JEV_MISSING) } }))
+  const r = await cli.run(['classify', 'one.jsonl'], itemsDir({ 'one.jsonl': '{"id":"a","text":"x"}' }), deps({ classify: async () => { throw new Error(JEV_MISSING) } }))
   assert.equal(r.code, 1)
   assert.equal(r.stderr, JEV_MISSING + '\n')
   const e = await cli.run(['eval'], call(), deps({ cases: async () => [{}], evaluate: async () => { throw new Error(JEV_MISSING) } }))
@@ -59,7 +74,7 @@ test('jev missing: the install hint on stderr, exit 1', async () => {
 })
 
 test('a jev refusal is printed as jev said it', async () => {
-  const r = await cli.run(['classify'], call('{"id":"a","text":"x"}'), deps({ classify: async () => { throw new Error('jev: monthly cap reached') } }))
+  const r = await cli.run(['classify', 'one.jsonl'], itemsDir({ 'one.jsonl': '{"id":"a","text":"x"}' }), deps({ classify: async () => { throw new Error('jev: monthly cap reached') } }))
   assert.equal(r.code, 1)
   assert.equal(r.stderr, 'jev: monthly cap reached\n')
 })

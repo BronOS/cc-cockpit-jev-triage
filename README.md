@@ -110,10 +110,7 @@ ccc triage questions   # the questions as Jev gets them
 
 ## CLI
 
-Every subcommand reads stdin only for `classify`, but the command declares stdin, so from a script or
-a Claude tab close it for the others: `ccc triage eval </dev/null`.
-
-- `ccc triage classify [source] [--json] < items.jsonl`: judge items given as JSON lines (the item
+- `ccc triage classify <items.jsonl> [source] [--json]`: judge items given as JSON lines in a file (the item
   shape above; source defaults to `cli`). Uses the cache and overrides like a source plugin and lists
   the verdicts in the panel, so it lets you try triage with no source plugin installed.
 - `ccc triage eval [--json]`: re-judge every case with the current settings (no cache, no overrides);
@@ -124,7 +121,7 @@ a Claude tab close it for the others: `ccc triage eval </dev/null`.
 - `ccc triage questions`, `ccc triage help`.
 
 ```
-$ ccc triage classify test < items.jsonl
+$ ccc triage classify items.jsonl test
 g1               fyi    alert        hint     1  Grafana alert to ops: [FIRING] disk 92% on db-1
 n1               noise  notification rule     1  Mail from Shop newsletter
 b1               urgent incident     jev      0.99  Chat, direct message from Ann (team lead)

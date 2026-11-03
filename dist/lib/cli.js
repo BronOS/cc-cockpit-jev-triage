@@ -7,7 +7,7 @@ const { JEV_MISSING } = require('./pipeline')
 
 const HELP = `triage: priority and kind for items of source plugins, judged by Jev (bronos.jev) with project rules and your corrections
 
-  ccc triage classify [source] [--json] < items.jsonl
+  ccc triage classify <items.jsonl> [source] [--json]
         judge items (one JSON object per line: { "id", "text", "hint"?, "floor"?, "fields"? });
         source defaults to "cli". Uses the cache and overrides like a source plugin would, and lists
         the verdicts in the panel. --json prints one { id, priority, kind, confidence, by } per line
@@ -50,6 +50,24 @@ function withBudget(promise, ms, what) {
     t = setTimeout(() => reject(new Error(`triage: ${what} took over ${Math.round(ms / 1000)} s; verdicts done so far are cached, run it again`)), ms)
   })
   return Promise.race([promise, timeout]).finally(() => clearTimeout(t))
+}
+
+const MAX_ITEMS_FILE = 5 * 1024 * 1024
+
+/** The items file, relative to the caller's folder; capped so a wrong path (a log) cannot fill memory. */
+async function readItemsFile(cwd, file) {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const abs = path.resolve(cwd || '.', file)
+  let st
+  try {
+    st = await fs.promises.stat(abs)
+  } catch {
+    throw new Error(`cannot read ${file}`)
+  }
+  if (!st.isFile()) throw new Error(`${file} is not a file`)
+  if (st.size > MAX_ITEMS_FILE) throw new Error(`${file} is larger than 5 MiB`)
+  return fs.promises.readFile(abs, 'utf8')
 }
 
 function parseItems(stdin) {
@@ -106,16 +124,19 @@ async function run(argv, call, deps) {
 
       case 'classify': {
         if (rest[0] === '--help') return { stdout: HELP }
-        if (rest.length > 1) return usage('classify takes at most one source')
-        const source = rest[0] || 'cli'
+        // The items come from a file, not stdin: a cli entry that declares stdin makes `ccc` read it for
+        // EVERY subcommand, and in a Claude tab's Bash (stdin open, nothing piped) `ccc triage rescore`
+        // then waited the full 40 s for an EOF that never came.
+        if (rest.length < 1 || rest.length > 2) return usage('classify takes a file of JSON lines and an optional source')
+        const [file, source = 'cli'] = rest
         if (!V.SOURCE_RE.test(source)) return usage(`source must match ${V.SOURCE_RE}`)
         let items
         try {
-          items = parseItems(call.stdin)
+          items = parseItems(await readItemsFile(call.cwd, file))
         } catch (e) {
           return usage(e.message)
         }
-        if (!items.length) return usage('no items on stdin (one JSON object per line); `ccc triage help` shows the shape')
+        if (!items.length) return usage(`no items in ${file} (one JSON object per line); \`ccc triage help\` shows the shape`)
         const { results, stats } = await withBudget(deps.classify(source, items), BUDGET_MS, 'classify')
         const out = items.map((it) => {
           const r = results[it.id] || { error: 'no result' }

@@ -82,7 +82,7 @@ Then `floor` raises the priority to at least the floor, never lowers it (Jira's 
   `ccc triage rescore`.
 - `ccc triage eval` runs every case through the current settings (bypassing the cache and
   overrides) and prints the pass count and the failures.
-- `ccc triage classify [source]` reads items as JSONL on stdin and prints verdicts: lets the
+- `ccc triage classify <items.jsonl> [source]` reads items as JSONL from a file (not stdin: a cli entry with stdin makes every subcommand wait for it) and prints verdicts: lets the
   person and Claude try it with no source plugin installed.
 - `ccc triage cases` lists cases; `ccc triage help`.
 

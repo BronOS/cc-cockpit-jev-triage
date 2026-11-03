@@ -42,14 +42,23 @@ function wrongForm(row) {
     el('option', { value: '' }, `kind: keep ${row.kind || 'none'}`),
     ...state.kinds.map((k) => el('option', { value: k }, k)))
   const note = el('input', { type: 'text', placeholder: 'why (optional, helps Improve)', 'aria-label': 'Note' })
-  const form = el('form', { class: 'wrong' }, pri, kind, note,
-    el('button', { type: 'submit', class: 'primary' }, 'Save'),
-    el('button', { type: 'button', onclick: () => { openForm = null; render() } }, 'Cancel'))
-  form.addEventListener('submit', (ev) => {
-    ev.preventDefault()
+  // Not a <form>: the panel frame is sandboxed without allow-forms, so the browser blocks a form
+  // submission before its `submit` event fires, and Save did nothing at all. A plain button (and
+  // Enter in the note) posts instead.
+  const save = () => {
     ccPanel.post({ type: 'wrong', source, id: row.id, priority: pri.value, kind: kind.value || undefined, note: note.value })
     openForm = null
+    render()
+  }
+  note.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault()
+      save()
+    }
   })
+  const form = el('div', { class: 'wrong' }, pri, kind, note,
+    el('button', { type: 'button', class: 'primary', onclick: save }, 'Save'),
+    el('button', { type: 'button', onclick: () => { openForm = null; render() } }, 'Cancel'))
   setTimeout(() => pri.focus(), 0)
   return form
 }

@@ -31,7 +31,10 @@ test('jev not available: panel notice, CLI exit 1, classify rejects only when Je
   assert.equal(ok.results['2'].by, 'rule')
   await assert.rejects(triage.classify('mail', [{ id: '3', text: 'needs jev' }]), (e) => e.message === JEV_MISSING)
 
-  const r = await ctx.runCli(['classify'], '{"id":"a","text":"needs jev"}\n')
+  // classify reads a file (an absolute path here); the fake cli passes the plugin data dir as cwd.
+  const itemsFile = require('node:path').join(require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'triage-host-')), 'items.jsonl')
+  require('node:fs').writeFileSync(itemsFile, '{"id":"a","text":"needs jev"}\n')
+  const r = await ctx.runCli(['classify', itemsFile])
   assert.equal(r.code, 1)
   assert.equal(r.stderr, JEV_MISSING + '\n')
   assert.equal(jev.calls.length, 0)

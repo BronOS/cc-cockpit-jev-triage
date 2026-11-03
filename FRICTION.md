@@ -84,3 +84,14 @@ guide says, what I did instead. Status: **Open** unless marked.
   model; the README says to run `ccc triage rescore` after changing it.
 - **`label` in `grid` options.** Open. The README lists `{ min, skip, workers }`; passing
   `{ label: 'jev-triage' }` works (the usage log shows `bronos.jev-triage/jev-triage`), but is not documented.
+
+## Form submit never fires in a panel (Open)
+
+- Needed: a small form in the panel (Wrong?: priority, kind, note, Save).
+- Guide: the panels topic says "no form posts" under the CSP, which reads as "a form cannot POST
+  to a URL", not "a form cannot be submitted".
+- What happened: the frame is sandboxed without `allow-forms`, so the browser blocks the
+  submission before the `submit` event fires; `ev.preventDefault()` in a submit handler never runs,
+  and Save silently did nothing (found by the person, not by any test).
+- Did instead: a `<div>` with a `type="button"` Save and Enter handled on the input.
+- Suggest: say in the panels topic that `<form>` submit events do not fire, and to use buttons.
