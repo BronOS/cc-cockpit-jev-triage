@@ -337,7 +337,7 @@ exports.activate = (ctx) => {
         const subject = c
           ? { source: c.source, id: c.id, text: c.text, got: c.got, expected: c.expected, note: c.note, isCase: true }
           : { source: m.source, id: m.id, text: row.text, got: row.base, isCase: false }
-        await ctx.sessions.open({ prompt: improvePrompt(ctx.pluginId, subject, settingsView()) })
+        await ctx.sessions.open({ prompt: improvePrompt(ctx.pluginId, subject, settingsView()), focus: true })
         return
       }
       if (m.type === 'eval') {

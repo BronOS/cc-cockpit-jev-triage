@@ -96,6 +96,7 @@ test('classify, Wrong?, override event, eval and rescore end to end', async () =
   await ctx.sendPanel({ type: 'improve', source: 'mail', id: 'm1' })
   assert.equal(ctx.sessionsOpened.length, 1)
   assert.match(ctx.sessionsOpened[0].prompt, /^\[jev-triage-improve\]/)
+  assert.equal(ctx.sessionsOpened[0].focus, true, 'a tab opened for a click is selected')
   assert.match(ctx.sessionsOpened[0].prompt, /never read these/)
 
   // Rescore forgets the cache and tells the source.

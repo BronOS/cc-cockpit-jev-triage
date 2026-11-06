@@ -1,7 +1,7 @@
 {
   "id": "bronos.jev-triage",
   "name": "Jev triage",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "api": 1,
   "main": "dist/host.js",
   "description": "Priority and kind for the items of source plugins (mail, Jira, chat), judged by Jev with project rules and your corrections: the \"triage\" plugin service.",
